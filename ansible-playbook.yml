@@ -1,0 +1,96 @@
+- name: Install docker on hosts
+  hosts: all
+  become: true
+
+  tasks:
+  - name: Update packages
+    apt:
+      update_cache: yes
+
+  - name: Install pip2
+    apt:
+      name: python-pip
+      state: present
+
+  - name: Install requests module
+    become: true
+    pip:
+      name: requests
+      executable: pip2
+
+  - name: Install docker-py
+    become: true
+    pip:
+      name: docker-py
+      state: present
+
+  - name: Ensure packages are present
+    apt:
+      name:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg-agent
+        - software-properties-common
+      state: present
+
+  - name: Ensure docker is present
+    apt:
+      name: docker.io
+      state: present
+
+  - name: Ensure docker is started
+    service:
+      name: docker
+      state: started
+
+- name: Build app
+  hosts: Build
+  become: true
+
+  tasks:
+  - name: Copy Dockerfile into build node
+    copy:
+      src: Dockerfile
+      dest: /home/ubuntu
+
+  - name: Build image
+    become: true
+    docker_image:
+      path: /home/ubuntu
+      name: buildappcert
+      tag: latest
+
+  - name: Login to Docker Hub
+    become: true
+    docker_login:
+      email: morgotq@gmail.com
+      username: morgotq
+      password: 
+
+  - name: Tag image with Docker Hub repository name
+    become: true
+    docker_image:
+      name: buildappcert
+      tag: latest
+      repository: morgotq/buildappcert
+      push: yes
+
+- name: Run application in prod
+  hosts: Prod
+  become: true
+
+  tasks:
+  - name: Pull Docker image from Docker Hub
+    become: true
+    docker_image:
+      name: morgotq/buildappcert
+      tag: latest
+  - name: Run Docker container
+    become: true
+    docker_container:
+      name: prod
+      image: morgotq/buildappcert
+      state: started
+      ports:
+        - "8080:8080"
