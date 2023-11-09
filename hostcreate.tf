@@ -29,7 +29,7 @@ resource "yandex_compute_instance" "build" {
     memory = 4
   }
 
-#Chose ubuntu 20.04 (if I want to select another OC I can do in bash 'yc compute image list --folder-id standard-images | grep ubuntu' for exemple
+#Chose OC and size hdd
   boot_disk {
     initialize_params {
       image_id = "fd88q8cetpv706g8kia9"
@@ -48,7 +48,7 @@ resource "yandex_compute_instance" "build" {
     ssh-keys = "root:${file("/home/dmitry/cer/Cert/build.pub")}"
   }
 
-#Connect to build host and build image then send to docker registry
+#Connect to build host and update package
   provisioner "remote-exec" {
     inline =  [
       "sudo apt update"
@@ -74,7 +74,7 @@ resource "yandex_compute_instance" "prod" {
     memory = 4
   }
 
-#Chose ubuntu 20.04 (if I want to select another OC I can do in bash 'yc compute image list --folder-id standard-images | grep ubuntu' for exemple
+#Chose OC and size hdd
   boot_disk {
     initialize_params {
       image_id = "fd88q8cetpv706g8kia9"
@@ -94,7 +94,7 @@ resource "yandex_compute_instance" "prod" {
   }
 
 
-#Connect to prod host and build image from registry and run it
+#Connect to prod host and update package
   provisioner "remote-exec" {
     inline =  [
       "sudo apt update"
